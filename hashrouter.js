@@ -53,8 +53,8 @@
    *
    * @method initialize
    * @param {Object} [options] initialize options.
-   *   @param {Boolean} [options.autoStart=true] indicating
-   *   whether to start monitoring hashchange event automatically.
+   *   @param {Boolean} [options.autoStart=true] indicating whether
+   *   to start monitoring hashchange event automatically.
    *   @param {Function} [options.notFound] called when hashchange
    *   and the new hash does not match any route rule.
    *   @param {Array} [options.routers] routers setting.
