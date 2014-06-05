@@ -5,30 +5,64 @@
   <script src="./hashrouter.js"></script>
 </head>
 <body>
+  <div id="output"></div>
+
   <script>
+  var $output = $('#output'),
+      log = function(txt) {
+        $output.append($('<p>' + txt + '</p>'));
+      };
+
+  log('initial hash is: "<span style="color:#f00;">' + location.hash + '</span>", router behavior is:');
+
   var hashrouter = new HashRouter({
     routers: [
       {
         reg: 'abc',
         handler: function(){
-          console.log('abc');
+          log('route abc~~~');
+          log('================================');
         }
       },
       {
         reg: /people\/(.+)\/(\d+)/i,
         handler: function(name, age) {
-          console.log(name);
-          console.log(age);
+          log(name + '\'s age is ' + age);
         },
         before: function(){
-          console.log('loading begin...');
+          log('people loading begin...');
         },
         after: function(){
-          console.log('loading end...');
+          log('people loading end...');
+          log('================================');
         }
       }
     ]
   });
+
+  hashrouter.addRoute(/music/i, function(){
+    var id = HashRouter.GetParam('id');
+    log('music~~ id:' + id);
+    log('================================');
+  });
+
+
+
+
+  // test starts...
+  location.hash = 'abc';
+  log('hash change to: : "<span style="color:#f00;">' + location.hash + '</span>", router behavior is:');
+
+  setTimeout(function(){
+    location.hash = 'people/tony/18';
+    log('hash change to: : "<span style="color:#f00;">' + location.hash + '</span>", router behavior is:');
+
+    setTimeout(function(){
+      location.hash = 'music/?id=123321';
+      log('hash change to: : "<span style="color:#f00;">' + location.hash + '</span>", router behavior is:');
+
+    }, 1000);
+  }, 1000);
   </script>
 </body>
 </html>
