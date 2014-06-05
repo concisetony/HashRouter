@@ -54,9 +54,9 @@
    * @method initialize
    * @param {Object} [options] initialize options.
    *   @param {Boolean} [options.autoStart=true] indicating
+   *   whether to start monitoring hashchange event automatically.
    *   @param {Function} [options.notFound] called when hashchange
    *   and the new hash does not match any route rule.
-   *   whether to start monitoring hashchange event automatically.
    *   @param {Array} [options.routers] routers setting.
    *   Each item should contains:
    *    reg {String|RegExp} for match rule.
