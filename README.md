@@ -4,12 +4,15 @@ HashRouter Class
 Javascript router class based on window.onhashchange. Support Ie6.
 
 
-Exports:
+##Exports:
   window.HashRouter {Class}
   window.HashRouter.GetParam {Function}
 
+##Usage Example
 
-Usage Example 1:
+###Usage Example 1:
+
+```
   hashrouter = new HashRouter({
     routers: [
       {
@@ -32,9 +35,12 @@ Usage Example 1:
       }
     ]
   });
+```
 
 
-Usage Example 2:
+###Usage Example 2:
+
+```
   hashrouter = new HashRouter();
   hashrouter.addRoute({
     reg: 'foo',
@@ -54,9 +60,12 @@ Usage Example 2:
     after: function(peopleId) {
     }
   );
+```
 
 
-Usage Example 3:
+###Usage Example 3:
+
+```
   hashrouter = new HashRouter({
     autoStart: false
   });
@@ -72,5 +81,6 @@ Usage Example 3:
   // hashrouter.stop();
   // hashrouter.dispose();
   //   or hashrouter.destroy();
+```
 
 
