@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="./jquery.js"></script>
+  <script src="./hashrouter.js"></script>
+</head>
+<body>
+  <script>
+  var hashrouter = new HashRouter({
+    routers: [
+      {
+        reg: 'abc',
+        handler: function(){
+          console.log('abc');
+        }
+      },
+      {
+        reg: /people\/(.+)\/(\d+)/i,
+        handler: function(name, age) {
+          console.log(name);
+          console.log(age);
+        },
+        before: function(){
+          console.log('loading begin...');
+        },
+        after: function(){
+          console.log('loading end...');
+        }
+      }
+    ]
+  });
+  </script>
+</body>
+</html>
