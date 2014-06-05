@@ -5,8 +5,11 @@ Javascript router class based on window.onhashchange. Support Ie6.
 
 
 ##Exports:
+
+```
   window.HashRouter {Class}
   window.HashRouter.GetParam {Function}
+```
 
 ##Usage Example
 
