@@ -4,7 +4,7 @@
  *
  * @module hashrouter 
  * @author Liu Xiaolong (ConciseTony@gmail.com)
- * @version 1.1
+ * @version 1.2
  *
  * @requires jQuery 1.*
  */
@@ -18,8 +18,16 @@
     return Object.prototype.toString.call(arg) === OBJECT_STRING;
   }
 
+  function isFunction(fn) {
+    return (typeof fn === 'function');
+  }
+
   function validRouteRule(reg) {
     return ((typeof reg === 'string') || (reg instanceof RegExp));
+  }
+
+  function isPromiseObject(obj) {
+    return !!(obj && typeof (obj === 'function'));
   }
 
   /**
@@ -57,6 +65,10 @@
    *   to start monitoring hashchange event automatically.
    *   @param {Function} [options.notFound] called when hashchange
    *   and the new hash does not match any route rule.
+   *   $param {Function} [options.before] called before every route (including
+   *   404), should return a promise object if it's asynchronous.
+   *   $param {Function} [options.after] called after every route (including
+   *   404), should return a promise object if it's asynchronous.
    *   @param {Array} [options.routers] routers setting.
    *   Each item should contains:
    *    reg {String|RegExp} for match rule.
@@ -71,9 +83,11 @@
     options = options || {};
     options.autoStart = (undefined === options.autoStart) ? true :
         options.autoStart;
-    this.options = options;
     this.routers = options.routers || [];
-    this.notFound = options.notFound || null;
+    this.notFound = options.notFound;
+    this.before = options.before;
+    this.after = options.after;
+
     // 不支持hashchange的浏览器特殊处理，且每个页面周期只处理一次
     if (!('onhashchange' in window) && !HashRouter._intervalId) {
       HashRouter._curHash = location.hash;
@@ -106,10 +120,13 @@
    *    2. addRoute(reg, options)
    *    3. addRoute(options)
    *    其中, options可以包含:
-   *      options.handler {Function}
-   *      options.before {Function}
-   *      options.after {Function}
    *      options.reg {String|RegExp} (第三种入参情况)
+   *      options.handler {Function}
+   *      [options.before] {Function}, 如果是异步操作，需要返回
+   *      promise对象，同步操作不需要
+   *      [options.after] {Function}, 如果是异步操作，需要返回
+   *      promise对象，同步操作不需要
+   *      [options.context] {Object}
    */
   proto.addRoute = function() {
     var route;
@@ -118,25 +135,24 @@
     }
     if (1 === arguments.length && isObject(arguments[0])) {
       route = arguments[0];
-      if (!validRouteRule(route.reg) || (typeof route.handler !== 'function')) {
+      if (!validRouteRule(route.reg) || !isFunction(route.handler)) {
         throw(EXCEPTION_INVALID_PARAM.replace('{{methodName}}', 'addRoute'));
         return;
       }
     } else if (2 === arguments.length) {
-      if (!validRouteRule(arguments[0]) || ((typeof arguments[1] !== 'function')
+      if (!validRouteRule(arguments[0]) || (!isFunction(arguments[1])
           && (!isObject(arguments[1]) || (isObject(arguments[1])
-          && (typeof arguments[1].handler !== 'function'))))) {
+          && !isFunction(arguments[1].handler))))) {
         throw(EXCEPTION_INVALID_PARAM.replace('{{methodName}}', 'addRoute'));
         return;
       }
       route = { reg: arguments[0] };
-      if (typeof arguments[1] === 'function') {
+      if (isFunction(arguments[1])) {
         route.handler = arguments[1];
       } else {
         $.extend(route, arguments[1]);
       }
     }
-    route.context = route.context || window;
 
     this.routers.push(route);
     // 第一次添加需要独立执行一次route匹配
@@ -180,7 +196,22 @@
    */
   proto.route = function(single) {
     var found = false, hash = location.hash.replace(/^#\/?/, ''),
-        match;
+        match, execNext, before = this.before, after = this.after,
+        steps = [];
+
+    // TODO 如果某个异步操作失败了，需要在这个层面处理否？
+    execNext = function() {
+      var step, result;
+      if (steps.length) {
+        step = steps.splice(0, 1)[0];
+        result = step();
+        if (isPromiseObject(result)) {
+          result.done(execNext);
+        } else {
+          execNext();
+        }
+      }
+    }
 
     match = function(index, route) {
       if (found) {
@@ -202,13 +233,15 @@
       }
 
       if (found) {
-        if (typeof route.before === 'function') {
-          route.before.apply(route.context, args);
-        }
-        route.handler.apply(route.context, args);
-        if (typeof route.after === 'function') {
-          route.after.apply(route.context, args);
-        }
+        isFunction(before) && steps.push(before);
+        isFunction(route.before) && steps.push(function(){
+            route.before.apply(route.context || window, args) });
+        steps.push(function(){ route.handler.apply(route.context || window, args) });
+        isFunction(route.after) && steps.push(function(){
+            route.after.apply(route.context || window, args) });
+        isFunction(after) && steps.push(after);
+        
+        execNext();
       }
     };
 
@@ -218,8 +251,11 @@
       $.each(this.routers, match);
     }
 
-    if (!found && typeof this.notFound === 'funciton') {
-      this.notFound();
+    if (!found && isFunction(this.notFound)) {
+      isFunction(before) && steps.push(before);
+      steps.push(this.notFound);
+      isFunction(after) && steps.push(after);
+      execNext();
     }
   };
 

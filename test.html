@@ -21,7 +21,6 @@
         reg: 'abc',
         handler: function(){
           log('route abc~~~');
-          log('================================');
         }
       },
       {
@@ -34,16 +33,31 @@
         },
         after: function(){
           log('people loading end...');
-          log('================================');
         }
       }
-    ]
+    ],
+
+    before: function(){
+      var dfd = $.Deferred();
+      log('================================');
+      log('~~~common before exec~~~');
+      dfd.resolve();
+      return dfd.promise();
+    },
+
+    after: function(){
+      log('~~~common after exec~~~');
+      log('================================');
+    },
+
+    notFound: function(){
+      log('oops! 404!');
+    }
   });
 
   hashrouter.addRoute(/music/i, function(){
     var id = HashRouter.GetParam('id');
     log('music~~ id:' + id);
-    log('================================');
   });
 
 
@@ -51,15 +65,20 @@
 
   // test starts...
   location.hash = 'abc';
-  log('hash change to: : "<span style="color:#f00;">' + location.hash + '</span>", router behavior is:');
+  log('hash change to:  "<span style="color:#f00;">' + location.hash + '</span>", router behavior is:');
 
   setTimeout(function(){
     location.hash = 'people/tony/18';
-    log('hash change to: : "<span style="color:#f00;">' + location.hash + '</span>", router behavior is:');
+    log('hash change to:  "<span style="color:#f00;">' + location.hash + '</span>", router behavior is:');
 
     setTimeout(function(){
       location.hash = 'music/?id=123321';
-      log('hash change to: : "<span style="color:#f00;">' + location.hash + '</span>", router behavior is:');
+      log('hash change to:  "<span style="color:#f00;">' + location.hash + '</span>", router behavior is:');
+      
+      setTimeout(function(){
+        location.hash = 'foobar';
+        log('hash change to:  "<span style="color:#f00;">' + location.hash + '</span>", router behavior is(expects 404):');
+      }, 1000);
 
     }, 1000);
   }, 1000);
